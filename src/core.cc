@@ -408,6 +408,13 @@ int gKeyboardLayout;
 // 0x6AD93C
 unsigned char gPressedPhysicalKeysCount;
 
+bool fingerDown = false;
+int fingerX = 480;
+int fingerY = 272;
+
+int fingerDX = 0;
+int fingerDY = 0;
+
 // 0x6AD940
 VcrEntry stru_6AD940;
 
@@ -416,6 +423,7 @@ SDL_Surface* gSdlSurface = NULL;
 SDL_Renderer* gSdlRenderer = NULL;
 SDL_Texture* gSdlTexture = NULL;
 SDL_Surface* gSdlTextureSurface = NULL;
+SDL_GameController* gSdlController = NULL;
 
 // 0x4C8A70
 int coreInit(int a1)
@@ -1374,7 +1382,19 @@ void _GNW95_process_message()
             break;
 #ifdef __vita__
         case SDL_FINGERDOWN:
+	    if (e.tfinger.touchId == 0) {
+                fingerDown = true;
+                fingerDX = (e.tfinger.x * 960) - fingerX;
+                fingerDY = (e.tfinger.y * 540) - fingerY;
+                fingerX = (e.tfinger.x * 960);
+                fingerY = (e.tfinger.y * 540);
+            }
+            break;
         case SDL_FINGERUP:
+	    if (e.tfinger.touchId == 0) {
+                fingerDown = false;
+            }
+            break;
         case SDL_FINGERMOTION:
             handleTouchEvent(e.tfinger);
             break;
@@ -1769,6 +1789,13 @@ void _mouse_info()
     // Adjust for mouse senstivity.
     x = (int)(x * gMouseSensitivity);
     y = (int)(y * gMouseSensitivity);
+
+    if (fingerDown) {
+        x = fingerDX;
+        y = fingerDY;
+        buttons |= MOUSE_STATE_LEFT_BUTTON_DOWN;
+        fingerDown = false;
+    }
 #endif
 
     if (gVcrState == VCR_STATE_PLAYING) {
